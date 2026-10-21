@@ -1,4 +1,5 @@
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
+import { parseAllowWrites } from "../core/index.js";
 
 export interface Env {
   /** Armazenamento do workers-oauth-provider (o nome do binding é fixo). */
@@ -12,9 +13,9 @@ export interface Env {
   SOLIDES_ALLOW_WRITES?: string;
 }
 
-/** A instalação permite escrita? Mesma regra do stdio: só o texto `true` (sem caixa alta). */
+/** A instalação permite escrita? Mesma regra do stdio (`parseAllowWrites`). */
 export function installationAllowsWrites(env: Pick<Env, "SOLIDES_ALLOW_WRITES">): boolean {
-  return env.SOLIDES_ALLOW_WRITES?.trim().toLowerCase() === "true";
+  return parseAllowWrites(env.SOLIDES_ALLOW_WRITES);
 }
 
 /**

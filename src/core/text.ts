@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /** Minúsculas, sem acentos e sem espaços nas pontas. Base de toda comparação de texto livre. */
 export function normalizeText(value: string): string {
   return value
@@ -16,3 +18,9 @@ export function includesText(haystack: string | null | undefined, needle: string
 export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
+
+/** CPF de entrada das tools: com ou sem formatação, exatamente 11 dígitos. Entrega só os dígitos. */
+export const cpfInput = z
+  .string()
+  .transform(digitsOnly)
+  .refine((cpf) => cpf.length === 11, "CPF inválido. Informe os 11 dígitos.");

@@ -1,7 +1,13 @@
 import { z } from "zod";
 import type { ToolContext } from "./context.js";
 import { jsonResult } from "./result.js";
-import { OCCURRENCE_TYPES_TEXT, occurrenceTypeIdInput, occurrenceTypeName } from "../occurrence-types.js";
+import {
+  OCCURRENCE_CLASSIFICATIONS,
+  OCCURRENCE_TYPES_TEXT,
+  occurrenceClassificationInput,
+  occurrenceTypeIdInput,
+  occurrenceTypeName,
+} from "../occurrence-types.js";
 import { isoDateInput, parseApiDate } from "../dates.js";
 import { paginate, paginationInput } from "../pagination.js";
 import { normalizeText } from "../text.js";
@@ -16,8 +22,6 @@ interface ApiOccurrence {
   value?: number;
   colaborador?: { id?: number; nome?: string } | null;
 }
-
-const CLASSIFICATIONS = { positive: "Positivo", negative: "Negativo" } as const;
 
 function summarize(o: ApiOccurrence) {
   return {
@@ -48,8 +52,7 @@ export function registerOccurrenceTools({ server, client }: ToolContext): void {
         type: occurrenceTypeIdInput
           .optional()
           .describe(`Tipo da Ocorrência, de 1 a 12: ${OCCURRENCE_TYPES_TEXT}.`),
-        classification: z
-          .enum(["positive", "negative"])
+        classification: occurrenceClassificationInput
           .optional()
           .describe("Classificação: `positive` (Positivo) ou `negative` (Negativo)."),
         date_from: isoDateInput.optional().describe("Ocorrências a partir desta data, inclusive (AAAA-MM-DD)."),
@@ -63,7 +66,7 @@ export function registerOccurrenceTools({ server, client }: ToolContext): void {
       const occurrences = await client.get<ApiOccurrence[] | undefined>("/ocorrencias");
       if (!Array.isArray(occurrences)) return jsonResult(occurrences);
       const typeName = type === undefined ? undefined : occurrenceTypeName(type);
-      const classificationName = classification === undefined ? undefined : CLASSIFICATIONS[classification];
+      const classificationName = classification === undefined ? undefined : OCCURRENCE_CLASSIFICATIONS[classification];
       const from = date_from === undefined ? undefined : Date.parse(date_from);
       const until = date_until === undefined ? undefined : Date.parse(date_until);
       const matches = occurrences.filter((o) => {

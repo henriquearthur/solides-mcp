@@ -30,6 +30,14 @@ export const occurrenceTypeIdInput = z
   .max(12)
   .transform((id) => id as OccurrenceTypeId);
 
+/** Classificação das Ocorrências nas tools (`positive`/`negative`) e o nome que a API usa. */
+export const OCCURRENCE_CLASSIFICATIONS = { positive: "Positivo", negative: "Negativo" } as const;
+
+export type OccurrenceClassification = keyof typeof OCCURRENCE_CLASSIFICATIONS;
+
+/** Parâmetro de classificação das tools. Sem `.describe`: cada tool descreve o seu uso. */
+export const occurrenceClassificationInput = z.enum(["positive", "negative"]);
+
 /** Nome do tipo como a API o devolve (ex.: 10 -> "Feedback"). */
 export function occurrenceTypeName(id: OccurrenceTypeId): string {
   return OCCURRENCE_TYPES[id];

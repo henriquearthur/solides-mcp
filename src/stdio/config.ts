@@ -1,4 +1,4 @@
-import type { SolidesServerConfig } from "../core/index.js";
+import { parseAllowWrites, type SolidesServerConfig } from "../core/index.js";
 
 export class StdioConfigError extends Error {}
 
@@ -15,7 +15,7 @@ export function readStdioConfig(
   }
   return {
     token,
-    allowWrites: env.SOLIDES_ALLOW_WRITES?.trim().toLowerCase() === "true",
+    allowWrites: parseAllowWrites(env.SOLIDES_ALLOW_WRITES),
     unauthorizedMessage:
       "Token inválido. Verifique o valor de SOLIDES_API_TOKEN (Token de API da Sólides Gestão).",
   };

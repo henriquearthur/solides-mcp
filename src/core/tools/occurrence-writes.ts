@@ -2,10 +2,13 @@ import { z } from "zod";
 import type { ToolContext } from "./context.js";
 import { jsonResult } from "./result.js";
 import { isoDateInput, isoToApiDate } from "../dates.js";
-import { OCCURRENCE_TYPES_TEXT, occurrenceTypeIdInput } from "../occurrence-types.js";
-import { digitsOnly } from "../text.js";
-
-const CLASSIFICATIONS = { positive: "Positivo", negative: "Negativo" } as const;
+import {
+  OCCURRENCE_CLASSIFICATIONS,
+  OCCURRENCE_TYPES_TEXT,
+  occurrenceClassificationInput,
+  occurrenceTypeIdInput,
+} from "../occurrence-types.js";
+import { cpfInput } from "../text.js";
 
 /** Tools de escrita de Ocorrências. Só são registradas quando a escrita está permitida (ADR 0002). */
 export function registerOccurrenceWriteTools({ server, client, allowWrites }: ToolContext): void {
@@ -22,15 +25,9 @@ export function registerOccurrenceWriteTools({ server, client, allowWrites }: To
         "Devolve a Ocorrência criada.",
       ].join(" "),
       inputSchema: {
-        cpf: z
-          .string()
-          .transform(digitsOnly)
-          .refine((cpf) => cpf.length === 11, "O CPF deve ter 11 dígitos.")
-          .describe("CPF do Colaborador, com ou sem formatação (campo `idNumber` do `list_employees`)."),
+        cpf: cpfInput.describe("CPF do Colaborador, com ou sem formatação (campo `idNumber` do `list_employees`)."),
         date: isoDateInput.describe("Data da Ocorrência (AAAA-MM-DD)."),
-        classification: z
-          .enum(["positive", "negative"])
-          .describe("Classificação: `positive` (Positivo) ou `negative` (Negativo)."),
+        classification: occurrenceClassificationInput.describe("Classificação: `positive` (Positivo) ou `negative` (Negativo)."),
         type: occurrenceTypeIdInput.describe(`Tipo da Ocorrência, de 1 a 12: ${OCCURRENCE_TYPES_TEXT}.`),
         comment: z.string().optional().describe("Comentário da Ocorrência."),
         value: z.number().optional().describe("Valor da Ocorrência, quando o tipo tiver um (por exemplo, desconto)."),
@@ -43,7 +40,7 @@ export function registerOccurrenceWriteTools({ server, client, allowWrites }: To
           body: {
             idNumber: cpf,
             incidentDate: isoToApiDate(date),
-            classification: CLASSIFICATIONS[classification],
+            classification: OCCURRENCE_CLASSIFICATIONS[classification],
             typeIncidentId: type,
             ...(comment !== undefined ? { comment } : {}),
             ...(value !== undefined ? { value } : {}),
