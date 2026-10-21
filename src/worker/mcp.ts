@@ -8,12 +8,13 @@ import { UNAUTHORIZED_MESSAGE, workerFetch, type Env, type SolidesGrantProps } f
  * requisição monta servidor e transporte novos (o transporte sem estado não é reutilizável).
  */
 export const mcpHandler = {
-  async fetch(request: Request, _env: Env, ctx: ExecutionContext<SolidesGrantProps>) {
+  async fetch(request: Request, _env: Env, ctx: ExecutionContext) {
     // Sem estado não há sessão para retomar nem stream standalone: só POST.
     if (request.method !== "POST") {
       return new Response("Método não permitido.", { status: 405, headers: { Allow: "POST" } });
     }
-    const { token, allowWrites } = ctx.props;
+    // Props gravadas em `completeAuthorization` (ver authorize.ts).
+    const { token, allowWrites } = ctx.props as SolidesGrantProps;
     const server = createSolidesServer({
       token,
       allowWrites,
