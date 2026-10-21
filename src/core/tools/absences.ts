@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ToolContext } from "./context.js";
 import { jsonResult } from "./result.js";
+import { isoDateInput, parseApiDate } from "../dates.js";
 import { paginate, paginationInput } from "../pagination.js";
 import { digitsOnly } from "../text.js";
 
@@ -27,12 +28,14 @@ function summarize(a: ApiAbsence) {
   };
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export function registerAbsenceTools({ server, client }: ToolContext): void {
   server.registerTool(
     "get_absences",
     {
       description:
-        "Consulta Absenteísmos da Sólides (registros de ausência ou ponto de um Colaborador).",
+        "Consulta Absenteísmos da Sólides (registros de ausência ou ponto de um Colaborador, com data e hora, tipo, local e observação). Sem `id`, lista paginada com um resumo de cada Absenteísmo (o Colaborador vem só com id e nome) e o total depois dos filtros; com `id`, devolve o registro completo.",
       inputSchema: {
         id: z
           .number()
@@ -44,18 +47,30 @@ export function registerAbsenceTools({ server, client }: ToolContext): void {
           .string()
           .refine((value) => digitsOnly(value).length === 11, { message: "CPF inválido. Informe os 11 dígitos." })
           .optional()
-          .describe("CPF do Colaborador, com ou sem pontos e traço. Lista só os Absenteísmos dele."),
+          .describe("CPF do Colaborador, com ou sem pontos e traço. Consulta só os Absenteísmos dele."),
+        employee_id: z.number().int().positive().optional().describe("Id do Colaborador (campo `id` do `list_employees`)."),
+        from: isoDateInput.optional().describe("Absenteísmos a partir desta data, inclusive (AAAA-MM-DD)."),
+        until: isoDateInput.optional().describe("Absenteísmos até esta data, inclusive (AAAA-MM-DD)."),
         ...paginationInput,
       },
       annotations: { readOnlyHint: true },
     },
-    async ({ id, cpf, limit, offset }) => {
+    async ({ id, cpf, employee_id, from, until, limit, offset }) => {
       if (id !== undefined) return jsonResult(await client.get(`/absenteismos/${id}`));
       const absences = await client.get<ApiAbsence[] | undefined>(
         cpf === undefined ? "/absenteismos" : `/absenteismos/colaborador/${digitsOnly(cpf)}`,
       );
       if (!Array.isArray(absences)) return jsonResult(absences);
-      return jsonResult(paginate(absences.map(summarize), { limit, offset }));
+      const start = from === undefined ? undefined : Date.parse(from);
+      const end = until === undefined ? undefined : Date.parse(until) + DAY_MS;
+      const matches = absences.filter((a) => {
+        if (employee_id !== undefined && a.employee?.id !== employee_id) return false;
+        if (start === undefined && end === undefined) return true;
+        const when = parseApiDate(a.dateTimeAbsenteeism)?.getTime();
+        if (when === undefined) return false;
+        return (start === undefined || when >= start) && (end === undefined || when < end);
+      });
+      return jsonResult(paginate(matches.map(summarize), { limit, offset }));
     },
   );
 }

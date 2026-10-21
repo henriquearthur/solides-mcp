@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { allAbsences, mariaArrival, mariaDeparture } from "./fixtures/absences.js";
+import { allAbsences, manyAbsences, mariaArrival, mariaDeparture } from "./fixtures/absences.js";
 import { connect, textOf, type TestHarness } from "./helpers/mcp.js";
 
 let h: TestHarness;
@@ -39,6 +39,89 @@ describe("get_absences: lista geral", () => {
       path: "/absenteismos",
       query: {},
     });
+  });
+});
+
+function ids(result: Awaited<ReturnType<typeof getAbsences>>): number[] {
+  return JSON.parse(textOf(result)).items.map((a: { id: number }) => a.id);
+}
+
+describe("get_absences: filtros no MCP", () => {
+  it("filtra por Colaborador (id) na lista geral", async () => {
+    h = await connect({ "GET /absenteismos": allAbsences });
+
+    const result = await getAbsences({ employee_id: 2 });
+
+    expect(ids(result)).toEqual([3]);
+    expect(JSON.parse(textOf(result)).total).toBe(1);
+    expect(h.requests[0]?.query).toEqual({});
+  });
+
+  it("filtra por intervalo de datas ISO comparado com dd/mm/aaaa HH:MM:SS, com os dois dias incluídos", async () => {
+    h = await connect({ "GET /absenteismos": allAbsences });
+
+    expect(ids(await getAbsences({ from: "2017-07-11", until: "2017-07-11" }))).toEqual([1, 2]);
+    expect(ids(await getAbsences({ from: "2017-07-12" }))).toEqual([3]);
+    expect(ids(await getAbsences({ until: "2017-07-10" }))).toEqual([]);
+    expect(ids(await getAbsences({ from: "2017-07-11", until: "2017-07-12" }))).toEqual([1, 2, 3]);
+  });
+
+  it("combina Colaborador, datas e CPF", async () => {
+    h = await connect({
+      "GET /absenteismos/colaborador/11223344556": [mariaArrival, mariaDeparture],
+    });
+
+    const result = await getAbsences({ cpf: "11223344556", employee_id: 1, from: "2017-07-11", until: "2017-07-11" });
+
+    expect(ids(result)).toEqual([1, 2]);
+  });
+
+  it("ignora o registro sem data válida quando há filtro de data", async () => {
+    h = await connect({ "GET /absenteismos": [{ id: 7, dateTimeAbsenteeism: null }, mariaArrival] });
+
+    expect(ids(await getAbsences({ from: "2017-01-01" }))).toEqual([1]);
+    expect(ids(await getAbsences())).toEqual([7, 1]);
+  });
+
+  it("rejeita data fora do formato ISO, sem chamar a API", async () => {
+    h = await connect({ "GET /absenteismos": allAbsences });
+
+    const result = await getAbsences({ from: "11/07/2017" });
+
+    expect(result.isError).toBe(true);
+    expect(h.requests).toHaveLength(0);
+  });
+});
+
+describe("get_absences: paginação", () => {
+  it("pagina com limit e offset, e total depois dos filtros", async () => {
+    h = await connect({ "GET /absenteismos": manyAbsences(120) });
+
+    const body = JSON.parse(textOf(await getAbsences({ limit: 10, offset: 115 })));
+
+    expect(body).toMatchObject({ total: 120, limit: 10, offset: 115 });
+    expect(body.items.map((a: { id: number }) => a.id)).toEqual([116, 117, 118, 119, 120]);
+  });
+});
+
+describe("get_absences: contrato da tool", () => {
+  it("é anotada com readOnlyHint e descrita em pt-BR", async () => {
+    h = await connect({});
+
+    const { tools } = await h.client.listTools();
+    const tool = tools.find((t) => t.name === "get_absences");
+
+    expect(tool?.annotations?.readOnlyHint).toBe(true);
+    expect(tool?.description).toContain("Absenteísmo");
+  });
+
+  it("devolve o corpo vazio da API sem tentar filtrar", async () => {
+    h = await connect({ "GET /absenteismos": { status: 200 } });
+
+    const result = await getAbsences({ employee_id: 1 });
+
+    expect(result.isError).toBeFalsy();
+    expect(textOf(result)).toBe("A Sólides respondeu sem conteúdo.");
   });
 });
 
