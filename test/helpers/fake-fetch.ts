@@ -10,9 +10,9 @@ export interface RecordedRequest {
   method: string;
   /** URL completa, com host e query. */
   url: string;
-  /** Host (ex.: "app.solides.com"). */
+  /** Host (ex.: "app.solides.com" para a V1, "apigw.solides.com.br" para a V3). */
   host: string;
-  /** Caminho depois do prefixo da base V1 (ex.: "/departamentos"). */
+  /** Caminho depois do prefixo da base do host: V1 "/pt-BR/api/v1" ou V3 "/management" (ex.: "/departamentos"). */
   path: string;
   query: Record<string, string>;
   headers: Record<string, string>;
@@ -35,7 +35,16 @@ export interface FakeFetch {
   requests: RecordedRequest[];
 }
 
-const V1_PREFIX = "/pt-BR/api/v1";
+/** Prefixo de caminho removido por host, para as rotas valerem nos dois hosts da Sólides. */
+const BASE_PREFIXES: Record<string, string> = {
+  "app.solides.com": "/pt-BR/api/v1",
+  "apigw.solides.com.br": "/management",
+};
+
+function stripBasePrefix(url: URL): string {
+  const prefix = BASE_PREFIXES[url.host];
+  return prefix && url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : url.pathname;
+}
 
 function isFakeResponse(value: unknown): value is FakeResponse {
   return (
@@ -53,9 +62,7 @@ export function createFakeFetch(routes: Record<string, FakeHandler>): FakeFetch 
   const fakeFetch = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
     const method = (init?.method ?? "GET").toUpperCase();
-    const path = url.pathname.startsWith(V1_PREFIX)
-      ? url.pathname.slice(V1_PREFIX.length)
-      : url.pathname;
+    const path = stripBasePrefix(url);
     const headers: Record<string, string> = {};
     new Headers(init?.headers).forEach((value, key) => {
       headers[key.toLowerCase()] = value;

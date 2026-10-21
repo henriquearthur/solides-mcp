@@ -5,6 +5,10 @@ import {
 } from "./errors.js";
 
 export const SOLIDES_V1_BASE_URL = "https://app.solides.com/pt-BR/api/v1";
+/** Host das Avaliações de desempenho V3; mesmo Token de API e mesmo header de autenticação. */
+export const SOLIDES_V3_BASE_URL = "https://apigw.solides.com.br/management";
+
+const BASE_URLS = { v1: SOLIDES_V1_BASE_URL, v3: SOLIDES_V3_BASE_URL } as const;
 
 export interface SolidesClientConfig {
   /** Token de API da Empresa. */
@@ -17,12 +21,14 @@ export interface SolidesClientConfig {
 }
 
 export interface RequestOptions {
+  /** API de destino: `v1` (padrão) ou `v3` (Avaliações V3, outro host). */
+  api?: keyof typeof BASE_URLS;
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
 }
 
 /**
- * Cliente da API Gestão V1 da Sólides. Falhas viram `SolidesApiError` com mensagem
+ * Cliente da API Gestão da Sólides (V1 e, por `api: "v3"`, o host V3). Falhas viram `SolidesApiError` com mensagem
  * em pt-BR; as tools não precisam interpretar status HTTP.
  */
 export class SolidesClient {
@@ -45,7 +51,7 @@ export class SolidesClient {
       );
     }
 
-    const url = new URL(SOLIDES_V1_BASE_URL + path);
+    const url = new URL(BASE_URLS[options.api ?? "v1"] + path);
     for (const [key, value] of Object.entries(options.query ?? {})) {
       if (value !== undefined) url.searchParams.set(key, String(value));
     }
