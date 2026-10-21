@@ -102,7 +102,9 @@ O deploy é sempre manual; nenhum workflow publica a instância.
 
 ### Plano do Workers
 
-> **Pendente de confirmação.** A medição de CPU da tool `get_occurrences` numa instância real ainda não foi feita. Cada chamada baixa e interpreta cerca de 2 MB de JSON (2,1 MB numa Empresa com 794 Ocorrências) (a API devolve todas as Ocorrências de uma vez), e o plano gratuito do Workers limita a CPU a 10 ms por requisição. Uma estimativa local, em Node, com 2,3 MB de Ocorrências sintéticas, mediu de 10 a 28 ms de CPU por chamada. **O plano gratuito provavelmente não basta para `get_occurrences`.** O mantenedor vai confirmar com a medição; até lá, se `get_occurrences` falhar por limite de CPU, use o plano Workers Paid. As demais tools tratam respostas bem menores.
+O plano gratuito do Workers limita a CPU a 10 ms por requisição. Quase todas as tools ficam bem abaixo disso. A exceção é `get_occurrences`: a API devolve todas as Ocorrências de uma vez (cerca de 2 MB de JSON), e a tool precisa interpretar tudo para filtrar.
+
+Medição numa instância real no plano gratuito, em 2026-10-21, com uma Empresa de 794 Ocorrências (2,1 MB): três chamadas de `get_occurrences` gastaram 13, 21 e 23 ms de CPU, e as três concluíram (`outcome: ok` no `wrangler tail`). As demais chamadas ficaram entre 0 e 6 ms. Ou seja, **o plano gratuito funciona, mas `get_occurrences` passa do limite nominal**, e a Cloudflare pode passar a cortar essas requisições. Se `get_occurrences` falhar com o erro 1102 (*Worker exceeded CPU time limit*), ou se a sua Empresa tiver muito mais Ocorrências, use o plano Workers Paid. Para medir a sua instância, rode `npx wrangler tail --format json` e veja o `cpuTime` de cada requisição.
 
 Outro limite do plano gratuito é o de 50 subrequisições por chamada. As tools que percorrem páginas da API (Currículos e Avaliações V3) têm um teto de 40 páginas e avisam na resposta (`incomplete: true`) quando o resultado fica incompleto.
 
