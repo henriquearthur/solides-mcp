@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { ToolContext } from "./context.js";
 import { jsonResult } from "./result.js";
 import { paginate, paginationInput } from "../pagination.js";
+import { digitsOnly } from "../text.js";
 
 /** Forma relevante de `GET /absenteismos` (schema `Absenteismo`); `employee` é o cadastro completo. */
 interface ApiAbsence {
@@ -39,13 +40,20 @@ export function registerAbsenceTools({ server, client }: ToolContext): void {
           .positive()
           .optional()
           .describe("Id do Absenteísmo. Devolve o registro completo, com o cadastro do Colaborador; ignora os demais filtros."),
+        cpf: z
+          .string()
+          .refine((value) => digitsOnly(value).length === 11, { message: "CPF inválido. Informe os 11 dígitos." })
+          .optional()
+          .describe("CPF do Colaborador, com ou sem pontos e traço. Lista só os Absenteísmos dele."),
         ...paginationInput,
       },
       annotations: { readOnlyHint: true },
     },
-    async ({ id, limit, offset }) => {
+    async ({ id, cpf, limit, offset }) => {
       if (id !== undefined) return jsonResult(await client.get(`/absenteismos/${id}`));
-      const absences = await client.get<ApiAbsence[] | undefined>("/absenteismos");
+      const absences = await client.get<ApiAbsence[] | undefined>(
+        cpf === undefined ? "/absenteismos" : `/absenteismos/colaborador/${digitsOnly(cpf)}`,
+      );
       if (!Array.isArray(absences)) return jsonResult(absences);
       return jsonResult(paginate(absences.map(summarize), { limit, offset }));
     },

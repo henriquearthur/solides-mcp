@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { allAbsences, mariaArrival } from "./fixtures/absences.js";
+import { allAbsences, mariaArrival, mariaDeparture } from "./fixtures/absences.js";
 import { connect, textOf, type TestHarness } from "./helpers/mcp.js";
 
 let h: TestHarness;
@@ -39,6 +39,30 @@ describe("get_absences: lista geral", () => {
       path: "/absenteismos",
       query: {},
     });
+  });
+});
+
+describe("get_absences: por CPF do Colaborador", () => {
+  it("busca GET /absenteismos/colaborador/{cpf} com o CPF só em dígitos e devolve o resumo paginado", async () => {
+    h = await connect({ "GET /absenteismos/colaborador/11223344556": [mariaArrival, mariaDeparture] });
+
+    const result = await getAbsences({ cpf: "112.233.445-56" });
+
+    expect(result.isError).toBeFalsy();
+    const body = JSON.parse(textOf(result));
+    expect(body.total).toBe(2);
+    expect(body.items.map((a: { id: number }) => a.id)).toEqual([1, 2]);
+    expect(body.items[0].employee).toEqual({ id: 1, name: "Maria de Fátima Souza" });
+    expect(h.requests.map((r) => r.path)).toEqual(["/absenteismos/colaborador/11223344556"]);
+  });
+
+  it("rejeita CPF que não tem 11 dígitos, sem chamar a API", async () => {
+    h = await connect({});
+
+    const result = await getAbsences({ cpf: "123" });
+
+    expect(result.isError).toBe(true);
+    expect(h.requests).toHaveLength(0);
   });
 });
 
