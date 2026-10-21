@@ -1,9 +1,8 @@
 import { z } from "zod";
 import type { ToolContext } from "./context.js";
-import { jsonResult } from "./result.js";
+import { jsonResult, pagedResult } from "./result.js";
 import { isoDateInput, isoToApiDate } from "../dates.js";
 import { paginate, paginationInput } from "../pagination.js";
-import { incompleteWarning, MAX_API_PAGES } from "../pages.js";
 import { digitsOnly, includesText } from "../text.js";
 import { getAllV3Pages } from "../v3.js";
 
@@ -82,7 +81,7 @@ export function registerEvaluationTools({ server, client }: ToolContext): void {
           );
         }
         const cycles = await getAllV3Pages<V3Resource>(client, CYCLES_PATH);
-        return resultWithWarning(cycles.items.map(flatten), cycles.incomplete, { limit, offset });
+        return pagedResult(cycles.items.map(flatten), cycles.incomplete, { limit, offset });
       }
 
       const evaluations = await getAllV3Pages<V3Resource>(client, `${CYCLES_PATH}/${cycle_id}/evaluations`);
@@ -95,17 +94,7 @@ export function registerEvaluationTools({ server, client }: ToolContext): void {
           (cpf === undefined || digitsOnly(ratedDocument) === digitsOnly(cpf))
         );
       });
-      return resultWithWarning(matches, evaluations.incomplete, { limit, offset });
+      return pagedResult(matches, evaluations.incomplete, { limit, offset });
     },
   );
-}
-
-/** Página `{ total, limit, offset, items }`, com `incomplete` e `warning` quando o teto de páginas foi atingido. */
-function resultWithWarning<T>(
-  items: T[],
-  incomplete: boolean,
-  page: { limit?: number | undefined; offset?: number | undefined },
-) {
-  const paged = paginate(items, page);
-  return jsonResult(incomplete ? { ...paged, incomplete: true, warning: incompleteWarning(MAX_API_PAGES) } : paged);
 }

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { incompleteWarning } from "../src/core/pages.js";
 import { resume, resumeJoao, resumeMaria, resumes } from "./fixtures/resumes.js";
 import type { RecordedRequest } from "./helpers/fake-fetch.js";
 import { connect, textOf, type TestHarness } from "./helpers/mcp.js";
@@ -49,7 +50,6 @@ describe("get_resumes: lista", () => {
       total: 2,
       limit: 50,
       offset: 0,
-      incomplete: false,
       items: [
         {
           id: 1,
@@ -107,7 +107,8 @@ describe("get_resumes: lista", () => {
     const page = JSON.parse(textOf(await getResumes({ limit: 200 })));
 
     expect(page.total).toBe(7);
-    expect(page.incomplete).toBe(false);
+    expect(page).not.toHaveProperty("incomplete");
+    expect(page).not.toHaveProperty("warning");
     expect(page.items.map((r: { id: number }) => r.id)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(h.requests.map((r) => r.query.page)).toEqual(["1", "2", "3", "4"]);
   });
@@ -118,7 +119,7 @@ describe("get_resumes: lista", () => {
     const page = JSON.parse(textOf(await getResumes()));
 
     expect(page.total).toBe(2);
-    expect(page.incomplete).toBe(false);
+    expect(page).not.toHaveProperty("incomplete");
     expect(h.requests.map((r) => r.query.page)).toEqual(["1", "2"]);
   });
 
@@ -139,8 +140,7 @@ describe("get_resumes: lista", () => {
     expect(h.requests).toHaveLength(40);
     expect(page.total).toBe(80);
     expect(page.incomplete).toBe(true);
-    expect(page.warning).toContain("incompleto");
-    expect(page.warning).toContain("40");
+    expect(page.warning).toBe(incompleteWarning());
   });
 
   it("não avisa quando a última página permitida é a última da API", async () => {
@@ -149,7 +149,7 @@ describe("get_resumes: lista", () => {
 
     const page = JSON.parse(textOf(await getResumes()));
 
-    expect(page.incomplete).toBe(false);
+    expect(page).not.toHaveProperty("incomplete");
     expect(page).not.toHaveProperty("warning");
     expect(page.total).toBe(78);
   });
