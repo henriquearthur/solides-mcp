@@ -118,7 +118,7 @@ Outro limite do plano gratuito é o de 50 subrequisições por chamada. As tools
 2. Crie um conector com a URL `https://<sua-instancia>/mcp` e autenticação OAuth.
 3. Conclua a autorização colando o Token de API, como acima.
 
-O cliente se registra sozinho (registro dinâmico de clientes). A conexão dura enquanto você usar o conector ao menos uma vez a cada 30 dias; se o Token de API for revogado na Sólides, as tools respondem "token inválido, reconecte o conector". Para mudar a escolha de escrita, reconecte o conector.
+O cliente se registra sozinho (registro dinâmico de clientes). A Autorização dura enquanto você usar o conector ao menos uma vez a cada 30 dias; se o Token de API for revogado na Sólides, as tools respondem "token inválido, reconecte o conector". Para mudar a escolha de escrita, reconecte o conector.
 
 ### Segurança e compartilhamento
 

@@ -31,7 +31,7 @@ export function renderAuthorizePage({ details, handle, error, offerWrites = fals
   const client = escapeHtml(details.clientName);
   const host = escapeHtml(details.redirectHost);
   const loopback = details.redirectIsLoopback
-    ? `<p class="aviso"><strong>Este acesso será enviado a um aplicativo no seu computador.</strong> Continue só se você acabou de iniciar a conexão por ele.</p>`
+    ? `<p class="aviso"><strong>Este acesso será enviado a um aplicativo no seu computador.</strong> Continue só se você acabou de iniciar a autorização por ele.</p>`
     : "";
   const writesBlock = offerWrites
     ? `

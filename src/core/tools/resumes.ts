@@ -72,7 +72,7 @@ export function registerResumeTools({ server, client }: ToolContext): void {
     "get_resumes",
     {
       description:
-        "Consulta os Currículos (candidatos do banco de talentos) da Sólides. Sem `id`, lista os Currículos, opcionalmente por intervalo de datas, com um resumo de cada um (id, nome, CPF, e-mail principal, telefones, senioridade e origem), sem foto; paginada e informa o total. Se a Sólides tiver Currículos demais, a lista pode vir incompleta e avisa. Com `id`, devolve o Currículo completo.",
+        "Consulta os Currículos do banco de talentos da Sólides. Sem `id`, lista os Currículos, opcionalmente por intervalo de datas, com um resumo de cada um (id, nome, CPF, e-mail principal, telefones, senioridade e origem), sem foto; paginada e informa o total. Se a Sólides tiver Currículos demais, a lista pode vir incompleta e avisa. Com `id`, devolve o Currículo completo.",
       inputSchema: {
         id: z.number().int().positive().optional().describe("Id do Currículo. Sem ele, lista os Currículos."),
         from: isoDateInput.optional().describe("Currículos a partir desta data (AAAA-MM-DD)."),

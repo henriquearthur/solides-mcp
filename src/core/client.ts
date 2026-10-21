@@ -47,7 +47,7 @@ export class SolidesClient {
     if (verb !== "GET" && !this.config.allowWrites) {
       throw new SolidesApiError(
         "write_not_allowed",
-        "A escrita não está permitida nesta conexão com a Sólides.",
+        "A escrita não está permitida neste acesso à Sólides.",
       );
     }
 
