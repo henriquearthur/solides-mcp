@@ -3,6 +3,7 @@ import type { ToolContext } from "./context.js";
 import { jsonResult } from "./result.js";
 import {
   OCCURRENCE_CLASSIFICATIONS,
+  OCCURRENCE_CLASSIFICATIONS_TEXT,
   OCCURRENCE_TYPES_TEXT,
   occurrenceClassificationFilterInput,
   occurrenceTypeIdInput,
@@ -54,9 +55,7 @@ export function registerOccurrenceTools({ server, client }: ToolContext): void {
           .describe(`Tipo da Ocorrência, de 1 a 12: ${OCCURRENCE_TYPES_TEXT}.`),
         classification: occurrenceClassificationFilterInput
           .optional()
-          .describe(
-            "Classificação: `positive` (Positivo), `negative` (Negativo), `neutral` (Neutro) ou `needs_improvement` (Para melhorar).",
-          ),
+          .describe(`Classificação: ${OCCURRENCE_CLASSIFICATIONS_TEXT}.`),
         date_from: isoDateInput.optional().describe("Ocorrências a partir desta data, inclusive (AAAA-MM-DD)."),
         date_until: isoDateInput.optional().describe("Ocorrências até esta data, inclusive (AAAA-MM-DD)."),
         ...paginationInput,

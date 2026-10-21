@@ -40,11 +40,18 @@ export const OCCURRENCE_CLASSIFICATIONS = {
 
 export type OccurrenceClassification = keyof typeof OCCURRENCE_CLASSIFICATIONS;
 
-/** Parâmetro de classificação da escrita. Sem `.describe`: cada tool descreve o seu uso. */
-export const occurrenceClassificationInput = z.enum(["positive", "negative"]);
+/** Parâmetro de classificação da escrita (só `positive` e `negative`). Sem `.describe`: cada tool descreve o seu uso. */
+export const occurrenceClassificationWriteInput = z.enum(["positive", "negative"]);
 
-/** Parâmetro de classificação da leitura: as quatro classificações que a API devolve. */
-export const occurrenceClassificationFilterInput = z.enum(["positive", "negative", "neutral", "needs_improvement"]);
+/** Parâmetro de classificação da leitura: todas as classificações que a API devolve. */
+export const occurrenceClassificationFilterInput = z.enum(
+  Object.keys(OCCURRENCE_CLASSIFICATIONS) as [OccurrenceClassification, ...OccurrenceClassification[]],
+);
+
+/** Classificações em texto para as descrições: "`positive` (Positivo), `negative` (Negativo), ...". */
+export const OCCURRENCE_CLASSIFICATIONS_TEXT = Object.entries(OCCURRENCE_CLASSIFICATIONS)
+  .map(([key, name]) => `\`${key}\` (${name})`)
+  .join(", ");
 
 /** Nome do tipo como a API o devolve (ex.: 10 -> "Feedback"). */
 export function occurrenceTypeName(id: OccurrenceTypeId): string {

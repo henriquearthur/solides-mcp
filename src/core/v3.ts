@@ -4,7 +4,7 @@ import { walkPages, type WalkedPages } from "./pages.js";
 
 /**
  * Nome do parâmetro de página da V3. A spec não o documenta, só `meta.pagination`; o teste de
- * fumaça confirmou `page` na API real (20 itens por página).
+ * fumaça confirmou `page` na API real.
  */
 export const V3_PAGE_PARAM = "page";
 

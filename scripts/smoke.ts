@@ -72,7 +72,7 @@ const checks: Check[] = [
 ];
 
 // Nomes de tipo e classificação que a API devolve precisam estar nas tabelas de src/core/occurrence-types.ts.
-// Imprime só contagens por nome, nenhum dado pessoal.
+// Imprime só o total e os nomes desconhecidos, nenhum dado pessoal.
 checks.push({
   name: "GET /ocorrencias — typeIncident e classification batem com as tabelas (#6)",
   run: async () => {
