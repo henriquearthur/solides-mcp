@@ -72,13 +72,14 @@ export function registerEmployeeTools({ server, client }: ToolContext): void {
       limit,
       offset,
     }) => {
-      const employees = await client.get<ApiEmployee[]>("/colaboradores", {
+      const employees = await client.get<ApiEmployee[] | undefined>("/colaboradores", {
         query: {
           status: include_dismissed ? "todos" : undefined,
           data_admissao: admitted_from === undefined ? undefined : isoToApiDate(admitted_from),
           data_admissao_anterior: admitted_until === undefined ? undefined : isoToApiDate(admitted_until),
         },
       });
+      if (!Array.isArray(employees)) return jsonResult(employees);
       const matches = employees.filter(
         (e) =>
           (name === undefined || includesText(e.name, name)) &&
@@ -91,5 +92,18 @@ export function registerEmployeeTools({ server, client }: ToolContext): void {
       );
       return jsonResult(paginate(matches.map(summarize), { limit, offset }));
     },
+  );
+
+  server.registerTool(
+    "get_employee",
+    {
+      description:
+        "Detalha um Colaborador da Sólides pelo id, com o cadastro completo. Se você só conhece o nome, o CPF ou a Matrícula, busque o id antes com `list_employees`.",
+      inputSchema: {
+        id: z.number().int().positive().describe("Id do Colaborador (campo `id` do `list_employees`)."),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ id }) => jsonResult(await client.get(`/colaboradores/${id}`)),
   );
 }
