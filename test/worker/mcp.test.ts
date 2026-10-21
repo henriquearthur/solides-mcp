@@ -67,7 +67,10 @@ it("fim a fim: registro, autorização, token e get_departments com o Token de A
     result: { isError?: boolean; content: Array<{ text: string }> };
   };
   expect(body.result.isError).toBeFalsy();
-  expect(JSON.parse(body.result.content[0]?.text ?? "")).toEqual(departments);
+  expect(JSON.parse(body.result.content[0]?.text ?? "")).toMatchObject({
+    total: departments.length,
+    items: departments,
+  });
   expect(solides.requests).toHaveLength(1);
   expect(solides.requests[0]).toMatchObject({
     method: "GET",
@@ -82,9 +85,12 @@ it("lista as tools sem tools de escrita (allowWrites desligado)", async () => {
   const { tokens } = await authorizeClient("token-bom");
 
   const response = await rpc(tokens.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" });
-  const body = (await response.json()) as { result: { tools: Array<{ name: string }> } };
+  const body = (await response.json()) as {
+    result: { tools: Array<{ name: string; annotations?: { readOnlyHint?: boolean } }> };
+  };
 
-  expect(body.result.tools.map((tool) => tool.name)).toEqual(["get_departments"]);
+  expect(body.result.tools.map((tool) => tool.name)).toContain("get_departments");
+  expect(body.result.tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
 });
 
 it("recusa /mcp com access token desconhecido", async () => {

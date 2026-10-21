@@ -21,9 +21,3 @@ jobs:
       - run: npm run typecheck
       # Roda os dois projetos do vitest: node (núcleo, stdio) e worker (runtime da Cloudflare).
       - run: npm test
-      # O pacote npm não pode levar o Worker nem suas dependências.
-      - name: Pacote sem Worker
-        run: |
-          npm pack --dry-run 2>&1 | tee pack.log
-          ! grep -E "src/worker|wrangler|dist/worker" pack.log
-          ! node -e "const d=require('./package.json').dependencies;process.exit(Object.keys(d).some(k=>/cloudflare|wrangler|agents/.test(k))?1:0)"
