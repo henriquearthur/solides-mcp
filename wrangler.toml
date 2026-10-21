@@ -1,0 +1,11 @@
+# Instância remota privada do solides-mcp. Cada pessoa faz o deploy na própria conta;
+# o repositório não fixa domínio nem rota.
+name = "solides-mcp"
+main = "src/worker/index.ts"
+compatibility_date = "2026-10-01"
+
+# Guarda clientes, Autorizações e tokens do workers-oauth-provider (o nome do binding é fixo).
+# Crie com `wrangler kv namespace create OAUTH_KV` e troque o id abaixo.
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "00000000000000000000000000000000"
