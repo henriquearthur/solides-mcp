@@ -3,7 +3,7 @@ import type { ToolContext } from "./context.js";
 import { jsonResult, pagedResult } from "./result.js";
 import { isoDateInput, isoToApiDate } from "../dates.js";
 import { paginate, paginationInput } from "../pagination.js";
-import { digitsOnly, includesText } from "../text.js";
+import { includesText, sameCpf } from "../text.js";
 import { getAllV3Pages } from "../v3.js";
 
 const V1_EVALUATION_PATHS = {
@@ -13,7 +13,7 @@ const V1_EVALUATION_PATHS = {
 
 const CYCLES_PATH = "/evaluation/external_api/solicitations";
 
-/** Item da V3: `{ id, type, attributes }`. */
+/** Item da V3: `{ id, type, attributes }`. As avaliações de um ciclo vêm só com `attributes`. */
 interface V3Resource {
   id?: number | string;
   attributes?: Record<string, unknown>;
@@ -21,7 +21,7 @@ interface V3Resource {
 
 /** Achata o item V3 mantendo os nomes de campo da API. */
 function flatten(resource: V3Resource) {
-  return { id: resource.id ?? null, ...resource.attributes };
+  return { ...(resource.id === undefined ? {} : { id: resource.id }), ...resource.attributes };
 }
 
 export function registerEvaluationTools({ server, client }: ToolContext): void {
@@ -91,7 +91,7 @@ export function registerEvaluationTools({ server, client }: ToolContext): void {
         const ratedDocument = rated.ratedDocument === undefined ? "" : String(rated.ratedDocument);
         return (
           (name === undefined || includesText(ratedName, name)) &&
-          (cpf === undefined || digitsOnly(ratedDocument) === digitsOnly(cpf))
+          (cpf === undefined || sameCpf(ratedDocument, cpf))
         );
       });
       return pagedResult(matches, evaluations.incomplete, { limit, offset });

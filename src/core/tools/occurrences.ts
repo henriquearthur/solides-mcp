@@ -4,7 +4,7 @@ import { jsonResult } from "./result.js";
 import {
   OCCURRENCE_CLASSIFICATIONS,
   OCCURRENCE_TYPES_TEXT,
-  occurrenceClassificationInput,
+  occurrenceClassificationFilterInput,
   occurrenceTypeIdInput,
   occurrenceTypeName,
 } from "../occurrence-types.js";
@@ -19,7 +19,7 @@ interface ApiOccurrence {
   typeIncident?: string;
   classification?: string;
   comment?: string;
-  value?: number;
+  value?: number | string;
   colaborador?: { id?: number; nome?: string } | null;
 }
 
@@ -52,9 +52,11 @@ export function registerOccurrenceTools({ server, client }: ToolContext): void {
         type: occurrenceTypeIdInput
           .optional()
           .describe(`Tipo da Ocorrência, de 1 a 12: ${OCCURRENCE_TYPES_TEXT}.`),
-        classification: occurrenceClassificationInput
+        classification: occurrenceClassificationFilterInput
           .optional()
-          .describe("Classificação: `positive` (Positivo) ou `negative` (Negativo)."),
+          .describe(
+            "Classificação: `positive` (Positivo), `negative` (Negativo), `neutral` (Neutro) ou `needs_improvement` (Para melhorar).",
+          ),
         date_from: isoDateInput.optional().describe("Ocorrências a partir desta data, inclusive (AAAA-MM-DD)."),
         date_until: isoDateInput.optional().describe("Ocorrências até esta data, inclusive (AAAA-MM-DD)."),
         ...paginationInput,

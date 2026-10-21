@@ -3,9 +3,8 @@ import { SolidesApiError } from "./errors.js";
 import { walkPages, type WalkedPages } from "./pages.js";
 
 /**
- * Nome do parâmetro de página da V3. NÃO CONFIRMADO: a spec não documenta o parâmetro,
- * só `meta.pagination`. `npm run smoke` pede a página 2 dos ciclos e imprime o `meta`
- * para o mantenedor confirmar; se for outro nome, mude só esta constante.
+ * Nome do parâmetro de página da V3. A spec não o documenta, só `meta.pagination`; o teste de
+ * fumaça confirmou `page` na API real (20 itens por página).
  */
 export const V3_PAGE_PARAM = "page";
 

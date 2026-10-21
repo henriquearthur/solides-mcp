@@ -3,7 +3,7 @@ import type { ToolContext } from "./context.js";
 import { jsonResult } from "./result.js";
 import { isoDateInput, isoToApiDate } from "../dates.js";
 import { paginate, paginationInput } from "../pagination.js";
-import { digitsOnly, includesText, normalizeText } from "../text.js";
+import { includesText, normalizeText, sameCpf } from "../text.js";
 
 interface NamedRef {
   name?: string;
@@ -83,7 +83,7 @@ export function registerEmployeeTools({ server, client }: ToolContext): void {
       const matches = employees.filter(
         (e) =>
           (name === undefined || includesText(e.name, name)) &&
-          (cpf === undefined || digitsOnly(e.idNumber ?? "") === digitsOnly(cpf)) &&
+          (cpf === undefined || sameCpf(e.idNumber ?? "", cpf)) &&
           (registration === undefined ||
             normalizeText(e.registration ?? "") === normalizeText(registration)) &&
           (department === undefined || includesText(e.departament?.name, department)) &&

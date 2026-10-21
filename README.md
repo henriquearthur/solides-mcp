@@ -137,7 +137,7 @@ Todas as tools de leitura levam `readOnlyHint`. Os nomes são em inglês e as de
 | `get_departments` | Departamentos | `id` |
 | `get_positions` | Cargos | `id` |
 | `get_reference_data` | CBOs, tipos de contrato e motivos de demissão | `kind` (`cbo`, `contract_types`, `dismissal_reasons`), `id`, `search` |
-| `get_occurrences` | Ocorrências, incluindo Feedbacks (tipo 10) | `id`, `employee_id`, `type` (1 a 12), `classification` (`positive`, `negative`), `date_from`, `date_until` |
+| `get_occurrences` | Ocorrências, incluindo Feedbacks (tipo 10) | `id`, `employee_id`, `type` (1 a 12), `classification` (`positive`, `negative`, `neutral`, `needs_improvement`), `date_from`, `date_until` |
 | `get_absences` | Absenteísmos | `id`, `cpf`, `employee_id`, `from`, `until` |
 | `get_profiler` | Profiler de todos os Colaboradores ou de um | `id` (do Colaborador) |
 | `get_passports` | Passaportes e relatório Profiler | `id`, `report_option` (Simples 1, Regular 2, Estendido 3, Coaching 4, Feedback 5; exige `id`) |
