@@ -44,6 +44,30 @@ const checks: Check[] = [
       return `${list.length} Departamento(s); detalhe do id ${first.id} confere`;
     },
   },
+  {
+    // UNCONFIRMED: a paginação e o formato de GET /curriculos ainda não foram vistos na API real.
+    name: "GET /curriculos (page 1 e 2, ocultar_foto=SIM) — confirma paginação e formato (#9)",
+    run: async () => {
+      const dateFinal = new Date();
+      const dateStart = new Date(dateFinal.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const fmt = (d: Date) =>
+        `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+      const query = { data_inicial: fmt(dateStart), data_final: fmt(dateFinal), ocultar_foto: "SIM" };
+      const counts: string[] = [];
+      let first: unknown;
+      const ids: unknown[][] = [];
+      for (const page of ["1", "2"]) {
+        const body = await client.get<unknown>("/curriculos", { query: { ...query, page } });
+        if (!Array.isArray(body)) throw new Error(`página ${page}: esperava array, veio ${typeof body}`);
+        counts.push(`página ${page}: ${body.length} item(ns)`);
+        ids.push(body.map((r) => (r as { id?: unknown }).id));
+        first ??= body[0];
+      }
+      const samePage = ids[0]?.length && JSON.stringify(ids[0]) === JSON.stringify(ids[1]);
+      const keys = first && typeof first === "object" ? Object.keys(first).join(", ") : "(sem itens)";
+      return `${counts.join("; ")}; ${samePage ? "página 2 IGUAL à 1 (a API parece ignorar `page`)" : "páginas diferentes"}; chaves do 1º item: ${keys}`;
+    },
+  },
 ];
 
 let failed = false;
