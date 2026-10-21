@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { allAbsences } from "./fixtures/absences.js";
+import { allAbsences, mariaArrival } from "./fixtures/absences.js";
 import { connect, textOf, type TestHarness } from "./helpers/mcp.js";
 
 let h: TestHarness;
@@ -39,5 +39,26 @@ describe("get_absences: lista geral", () => {
       path: "/absenteismos",
       query: {},
     });
+  });
+});
+
+describe("get_absences: detalhe por id", () => {
+  it("busca GET /absenteismos/{id} e devolve o registro completo, com o employee inteiro", async () => {
+    h = await connect({ "GET /absenteismos/1": mariaArrival });
+
+    const result = await getAbsences({ id: 1 });
+
+    expect(result.isError).toBeFalsy();
+    expect(JSON.parse(textOf(result))).toEqual(mariaArrival);
+    expect(h.requests.map((r) => r.path)).toEqual(["/absenteismos/1"]);
+  });
+
+  it("devolve a mensagem em pt-BR quando o Absenteísmo não existe", async () => {
+    h = await connect({});
+
+    const result = await getAbsences({ id: 99 });
+
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toBe("Registro não encontrado na Sólides.");
   });
 });

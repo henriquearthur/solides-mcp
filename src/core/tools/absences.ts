@@ -32,10 +32,19 @@ export function registerAbsenceTools({ server, client }: ToolContext): void {
     {
       description:
         "Consulta Absenteísmos da Sólides (registros de ausência ou ponto de um Colaborador).",
-      inputSchema: { ...paginationInput },
+      inputSchema: {
+        id: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Id do Absenteísmo. Devolve o registro completo, com o cadastro do Colaborador; ignora os demais filtros."),
+        ...paginationInput,
+      },
       annotations: { readOnlyHint: true },
     },
-    async ({ limit, offset }) => {
+    async ({ id, limit, offset }) => {
+      if (id !== undefined) return jsonResult(await client.get(`/absenteismos/${id}`));
       const absences = await client.get<ApiAbsence[] | undefined>("/absenteismos");
       if (!Array.isArray(absences)) return jsonResult(absences);
       return jsonResult(paginate(absences.map(summarize), { limit, offset }));
