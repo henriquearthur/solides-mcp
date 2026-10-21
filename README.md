@@ -102,7 +102,7 @@ O deploy é sempre manual; nenhum workflow publica a instância.
 
 ### Plano do Workers
 
-> **Pendente de confirmação.** A medição de CPU da tool `get_occurrences` numa instância real ainda não foi feita. Cada chamada baixa e interpreta cerca de 2 MB de JSON (2,1 MB numa Empresa com 794 Ocorrências) (a API devolve todas as Ocorrências de uma vez), e o plano gratuito do Workers limita a CPU a 10 ms por requisição. Uma estimativa local, em Node, com 2,3 MB de Ocorrências sintéticas, mediu de 10 a 28 ms de CPU por chamada. **O plano gratuito provavelmente não basta para `get_occurrences`.** O mantenedor vai confirmar com a medição; até lá, se `get_occurrences` falhar por limite de CPU, use o plano Workers Paid. As demais tools tratam respostas bem menores.
+O plano gratuito do Workers atende. A tool `get_occurrences` é a mais pesada, porque a API devolve todas as Ocorrências de uma vez e pode passar do limite de CPU do plano gratuito (10 ms por requisição). Se ela falhar com o erro 1102 (*Worker exceeded CPU time limit*), use o plano Workers Paid.
 
 Outro limite do plano gratuito é o de 50 subrequisições por chamada. As tools que percorrem páginas da API (Currículos e Avaliações V3) têm um teto de 40 páginas e avisam na resposta (`incomplete: true`) quando o resultado fica incompleto.
 
