@@ -13,14 +13,18 @@ export function worker(path: string, init?: RequestInit): Promise<Response> {
 
 /**
  * Sólides falsa. O Worker chama o `fetch` global (no mesmo isolate do teste), então
- * troca-se o global por um fetch falso. Qualquer método diferente de GET é erro de teste:
- * este projeto nunca escreve na Sólides.
+ * troca-se o global por um fetch falso. Qualquer método diferente de GET é erro de teste
+ * (salvo `fakeWrites`, que continua em memória, só nas rotas declaradas): este projeto
+ * nunca escreve na Sólides.
  */
-export function stubSolides(routes: Record<string, FakeHandler>): FakeFetch {
+export function stubSolides(
+  routes: Record<string, FakeHandler>,
+  options: { fakeWrites?: boolean } = {},
+): FakeFetch {
   const fake = createFakeFetch(routes);
   const guarded = (async (input: string | URL | Request, init?: RequestInit) => {
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
-    if (method !== "GET") throw new Error(`teste tentou ${method} fora de GET na Sólides falsa`);
+    if (method !== "GET" && !options.fakeWrites) throw new Error(`teste tentou ${method} fora de GET na Sólides falsa`);
     return fake.fetch(input, init);
   }) as typeof fetch;
   vi.stubGlobal("fetch", guarded);
@@ -112,7 +116,7 @@ export function cookieOf(response: Response): string {
 /** Envia o formulário da tela de autorização. */
 export function submitAuthorizeScreen(
   screen: Pick<AuthorizeScreen, "url" | "handle" | "cookie">,
-  fields: { token: string; decision?: "approve" | "deny" },
+  fields: { token: string; decision?: "approve" | "deny"; allowWrites?: boolean },
 ): Promise<Response> {
   return worker(screen.url, {
     method: "POST",
@@ -121,6 +125,8 @@ export function submitAuthorizeScreen(
       handle: screen.handle,
       token: fields.token,
       decision: fields.decision ?? "approve",
+      // Caixa marcada de um formulário HTML: o campo existe (valor "on"); desmarcada: ausente.
+      ...(fields.allowWrites ? { allowWrites: "on" } : {}),
     }),
   });
 }

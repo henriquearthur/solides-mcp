@@ -4,6 +4,12 @@ name = "solides-mcp"
 main = "src/worker/index.ts"
 compatibility_date = "2026-10-01"
 
+# Teto da instalação para a escrita (ADR 0002). Com "false", a tela de autorização não mostra a
+# caixa "Permitir escrita" e as tools de escrita nunca são registradas. Mude para "true" para
+# deixar cada usuário escolher na Autorização.
+[vars]
+SOLIDES_ALLOW_WRITES = "false"
+
 # Guarda clientes, Autorizações e tokens do workers-oauth-provider (o nome do binding é fixo).
 # Crie com `wrangler kv namespace create OAUTH_KV` e troque o id abaixo.
 [[kv_namespaces]]

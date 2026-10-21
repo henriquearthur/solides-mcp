@@ -5,6 +5,16 @@ export interface Env {
   OAUTH_KV: KVNamespace;
   /** Helpers do provider, injetados por ele. */
   OAUTH_PROVIDER: OAuthHelpers;
+  /**
+   * Teto da instalação para a escrita (ADR 0002): `"true"` libera a caixa "Permitir escrita"
+   * na tela de autorização. Ausente ou qualquer outro valor: escrita desligada.
+   */
+  SOLIDES_ALLOW_WRITES?: string;
+}
+
+/** A instalação permite escrita? Mesma regra do stdio: só o texto `true` (sem caixa alta). */
+export function installationAllowsWrites(env: Pick<Env, "SOLIDES_ALLOW_WRITES">): boolean {
+  return env.SOLIDES_ALLOW_WRITES?.trim().toLowerCase() === "true";
 }
 
 /**

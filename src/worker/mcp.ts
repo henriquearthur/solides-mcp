@@ -1,6 +1,12 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { createSolidesServer } from "../core/index.js";
-import { UNAUTHORIZED_MESSAGE, workerFetch, type Env, type SolidesGrantProps } from "./shared.js";
+import {
+  UNAUTHORIZED_MESSAGE,
+  installationAllowsWrites,
+  workerFetch,
+  type Env,
+  type SolidesGrantProps,
+} from "./shared.js";
 
 /**
  * Endpoint MCP HTTP streamable sem estado. O provider só chama este handler com um
@@ -8,7 +14,7 @@ import { UNAUTHORIZED_MESSAGE, workerFetch, type Env, type SolidesGrantProps } f
  * requisição monta servidor e transporte novos (o transporte sem estado não é reutilizável).
  */
 export const mcpHandler = {
-  async fetch(request: Request, _env: Env, ctx: ExecutionContext) {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     // Sem estado não há sessão para retomar nem stream standalone: só POST.
     if (request.method !== "POST") {
       return new Response("Método não permitido.", { status: 405, headers: { Allow: "POST" } });
@@ -17,7 +23,8 @@ export const mcpHandler = {
     const { token, allowWrites } = ctx.props as SolidesGrantProps;
     const server = createSolidesServer({
       token,
-      allowWrites,
+      // A flag da instalação é o teto: vale a cada requisição, também para Autorizações antigas.
+      allowWrites: allowWrites === true && installationAllowsWrites(env),
       fetch: workerFetch,
       unauthorizedMessage: UNAUTHORIZED_MESSAGE,
     });

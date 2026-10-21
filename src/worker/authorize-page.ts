@@ -19,17 +19,24 @@ export interface AuthorizePageInput {
   handle: string;
   /** Erro da tentativa anterior, em pt-BR. */
   error?: string;
+  /** A instalação permite escrita (teto): só então a caixa "Permitir escrita" é renderizada. */
+  offerWrites?: boolean;
 }
 
 /**
  * Tela de autorização. Pede o Token de API da Empresa.
  * O token digitado nunca é reexibido: ao errar, o campo volta vazio.
  */
-export function renderAuthorizePage({ details, handle, error }: AuthorizePageInput): string {
+export function renderAuthorizePage({ details, handle, error, offerWrites = false }: AuthorizePageInput): string {
   const client = escapeHtml(details.clientName);
   const host = escapeHtml(details.redirectHost);
   const loopback = details.redirectIsLoopback
     ? `<p class="aviso"><strong>Este acesso será enviado a um aplicativo no seu computador.</strong> Continue só se você acabou de iniciar a conexão por ele.</p>`
+    : "";
+  const writesBlock = offerWrites
+    ? `
+  <label class="opcao"><input type="checkbox" name="allowWrites"> Permitir escrita (registrar e excluir Ocorrências)</label>
+  <small>Desmarcada, o chat só consulta a Sólides. Para mudar a escolha depois, reconecte o conector.</small>`
     : "";
   const errorBlock = error ? `<p class="erro" role="alert">${escapeHtml(error)}</p>` : "";
 
@@ -46,6 +53,7 @@ export function renderAuthorizePage({ details, handle, error }: AuthorizePageInp
   button { font: inherit; padding: .6rem 1.1rem; margin: 1.25rem .5rem 0 0; cursor: pointer; }
   .erro { color: #a40000; background: #fdecec; padding: .6rem .8rem; border-radius: .3rem; }
   .aviso { background: #fff6e0; padding: .6rem .8rem; border-radius: .3rem; }
+  label.opcao { font-weight: normal; }
   small { color: #555; }
 </style>
 </head>
@@ -59,7 +67,7 @@ ${errorBlock}
   <label for="token">Token de API da Sólides</label>
   <input id="token" name="token" type="password" autocomplete="off" required autofocus>
   <small>Gere o token nas configurações da Sólides Gestão. Ele fica guardado só nesta Autorização, criptografado.</small>
-  <!-- #11: o campo "Permitir escrita" entra aqui, junto com o campo allowWrites em readGrantOptions (authorize.ts). -->
+  ${writesBlock}
   <div>
     <button type="submit" name="decision" value="approve">Autorizar</button>
     <button type="submit" name="decision" value="deny" formnovalidate>Negar</button>

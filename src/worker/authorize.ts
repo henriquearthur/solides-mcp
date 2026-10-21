@@ -1,7 +1,7 @@
-import { AuthorizationError, type OAuthHelpers } from "@cloudflare/workers-oauth-provider";
+import { AuthorizationError } from "@cloudflare/workers-oauth-provider";
 import { SolidesApiError, SolidesClient } from "../core/index.js";
 import { escapeHtml, renderAuthorizePage } from "./authorize-page.js";
-import { workerFetch, type Env, type SolidesGrantProps } from "./shared.js";
+import { installationAllowsWrites, workerFetch, type Env, type SolidesGrantProps } from "./shared.js";
 
 const HTML = { "Content-Type": "text/html; charset=utf-8" };
 const TEXT = { "Content-Type": "text/plain; charset=utf-8" };
@@ -28,31 +28,34 @@ async function checkToken(token: string): Promise<string | undefined> {
 }
 
 /**
- * Props da Autorização a partir do formulário.
- * Ponto de extensão do ticket #11: ler aqui o campo "Permitir escrita" (e o escopo
- * correspondente) para definir `allowWrites`. Por ora a escrita fica sempre desligada.
+ * Props da Autorização a partir do formulário. A escrita só liga se a instalação permite
+ * (teto, ADR 0002) E a caixa veio marcada: com a flag desligada o campo é ignorado,
+ * então uma requisição forjada não ativa a escrita.
  */
-function readGrantOptions(_form: FormData): Pick<SolidesGrantProps, "allowWrites"> {
-  return { allowWrites: false };
+function readGrantOptions(form: FormData, env: Env): Pick<SolidesGrantProps, "allowWrites"> {
+  return { allowWrites: installationAllowsWrites(env) && form.get("allowWrites") === "on" };
 }
 
-async function showScreen(
-  oauth: OAuthHelpers,
-  request: Request,
-  error?: string,
-): Promise<Response> {
+async function showScreen(env: Env, request: Request, error?: string): Promise<Response> {
+  const oauth = env.OAUTH_PROVIDER;
   const authRequest = await oauth.parseAuthRequest(request);
   const details = await oauth.describeConsent(authRequest);
   const consent = await oauth.beginConsent(authRequest);
   const headers = new Headers(consent.headers);
   for (const [name, value] of Object.entries(HTML)) headers.set(name, value);
-  return new Response(renderAuthorizePage({ details, handle: consent.handle, error }), {
+  return new Response(renderAuthorizePage({
+      details,
+      handle: consent.handle,
+      error,
+      offerWrites: installationAllowsWrites(env),
+    }), {
     status: 200,
     headers,
   });
 }
 
-async function submit(oauth: OAuthHelpers, request: Request): Promise<Response> {
+async function submit(env: Env, request: Request): Promise<Response> {
+  const oauth = env.OAUTH_PROVIDER;
   const form = await request.formData();
   const handle = String(form.get("handle") ?? "");
 
@@ -64,10 +67,10 @@ async function submit(oauth: OAuthHelpers, request: Request): Promise<Response> 
   const token = String(form.get("token") ?? "").trim();
   const error = await checkToken(token);
   // Só consome o handle (approveConsent) com token válido; com erro, reabre a tela com handle novo.
-  if (error) return showScreen(oauth, request, error);
+  if (error) return showScreen(env, request, error);
 
   const approved = await oauth.approveConsent(request, handle);
-  const props: SolidesGrantProps = { token, ...readGrantOptions(form) };
+  const props: SolidesGrantProps = { token, ...readGrantOptions(form, env) };
   const { redirectTo } = await oauth.completeAuthorization({
     request: approved.request,
     // A Autorização não é ligada a uma conta nossa: id aleatório (sem ":").
@@ -95,8 +98,8 @@ export const authorizeHandler = {
 
     try {
       return request.method === "GET"
-        ? await showScreen(env.OAUTH_PROVIDER, request)
-        : await submit(env.OAUTH_PROVIDER, request);
+        ? await showScreen(env, request)
+        : await submit(env, request);
     } catch (error) {
       if (error instanceof AuthorizationError) {
         // Só redireciona ao cliente quando o provider já validou o cliente e o redirect_uri.
