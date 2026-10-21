@@ -14,12 +14,34 @@ describe("get_departments", () => {
     const result = await h.client.callTool({ name: "get_departments", arguments: {} });
 
     expect(result.isError).toBeFalsy();
-    expect(JSON.parse(textOf(result))).toEqual(departments);
+    expect(JSON.parse(textOf(result))).toEqual({
+      total: 2,
+      limit: 50,
+      offset: 0,
+      items: departments,
+    });
     expect(h.requests).toHaveLength(1);
     expect(h.requests[0]).toMatchObject({
       method: "GET",
       host: "app.solides.com",
       path: "/departamentos",
+    });
+  });
+
+  it("pagina a lista com limit e offset e informa o total", async () => {
+    const many = Array.from({ length: 7 }, (_, i) => ({ id: i + 1, name: `Departamento ${i + 1}` }));
+    h = await connect({ "GET /departamentos": many });
+
+    const result = await h.client.callTool({
+      name: "get_departments",
+      arguments: { limit: 3, offset: 2 },
+    });
+
+    expect(JSON.parse(textOf(result))).toEqual({
+      total: 7,
+      limit: 3,
+      offset: 2,
+      items: many.slice(2, 5),
     });
   });
 
