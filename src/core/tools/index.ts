@@ -1,4 +1,5 @@
 import { registerDepartmentTools } from "./departments.js";
+import { registerAbsenceTools } from "./absences.js";
 import { registerEmployeeTools } from "./employees.js";
 import { registerPositionTools } from "./positions.js";
 import { registerProfilerTools } from "./profiler.js";
@@ -12,4 +13,5 @@ export const toolModules: RegisterTools[] = [
   registerPositionTools,
   registerProfilerTools,
   registerResumeTools,
+  registerAbsenceTools,
 ];
