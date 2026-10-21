@@ -45,6 +45,28 @@ describe("requisições", () => {
   });
 });
 
+describe("host V3", () => {
+  it("usa a base apigw.solides.com.br/management com o mesmo header de autenticação", async () => {
+    const { client, requests } = makeClient({ "GET /evaluation/external_api/solicitations": {} });
+
+    await client.get("/evaluation/external_api/solicitations", { api: "v3", query: { page: 2 } });
+
+    expect(requests[0]?.url).toBe(
+      "https://apigw.solides.com.br/management/evaluation/external_api/solicitations?page=2",
+    );
+    expect(requests[0]?.headers.authorization).toBe("Token token=meu-token");
+  });
+
+  it.each(["POST", "PUT", "PATCH", "DELETE"])("a guarda de escrita também recusa %s no host V3", async (method) => {
+    const { client, requests } = makeClient({});
+
+    const error = await errorOf(client.request(method, "/qualquer", { api: "v3", body: {} }));
+
+    expect(error.kind).toBe("write_not_allowed");
+    expect(requests).toHaveLength(0);
+  });
+});
+
 describe("guarda de escrita", () => {
   it.each(["POST", "PUT", "PATCH", "DELETE"])(
     "recusa %s sem fazer a requisição quando a escrita não está permitida",

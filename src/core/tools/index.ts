@@ -1,6 +1,7 @@
 import { registerDepartmentTools } from "./departments.js";
 import { registerAbsenceTools } from "./absences.js";
 import { registerEmployeeTools } from "./employees.js";
+import { registerEvaluationTools } from "./evaluations.js";
 import { registerOccurrenceTools } from "./occurrences.js";
 import { registerOccurrenceWriteTools } from "./occurrence-writes.js";
 import { registerPositionTools } from "./positions.js";
@@ -18,4 +19,5 @@ export const toolModules: RegisterTools[] = [
   registerAbsenceTools,
   registerOccurrenceTools,
   registerOccurrenceWriteTools,
+  registerEvaluationTools,
 ];
