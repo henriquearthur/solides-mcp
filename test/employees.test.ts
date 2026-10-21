@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { activeEmployees, maria } from "./fixtures/employees.js";
+import { activeEmployees, allEmployees, maria } from "./fixtures/employees.js";
+import type { RecordedRequest } from "./helpers/fake-fetch.js";
 import { connect, textOf, type TestHarness } from "./helpers/mcp.js";
 
 let h: TestHarness;
@@ -114,6 +115,40 @@ describe("list_employees", () => {
 
     expect(result.total).toBe(0);
     expect(result.items).toEqual([]);
+  });
+
+  it("com include_dismissed envia status=todos e traz também os demitidos", async () => {
+    h = await connect({
+      "GET /colaboradores": (req: RecordedRequest) => (req.query.status === "todos" ? allEmployees : activeEmployees),
+    });
+
+    const result = JSON.parse(textOf(await listEmployees({ include_dismissed: true })));
+
+    expect(h.requests[0]?.query).toEqual({ status: "todos" });
+    expect(result.items.map(idOf)).toEqual([1, 2, 3]);
+    expect(result.items[2]).toMatchObject({ id: 3, active: false });
+  });
+
+  it("converte o intervalo de admissão de ISO para dd/mm/aaaa nos parâmetros da API", async () => {
+    h = await connect({ "GET /colaboradores": activeEmployees });
+
+    await listEmployees({ admitted_from: "2020-01-05", admitted_until: "2023-12-31" });
+
+    expect(h.requests[0]?.query).toEqual({
+      data_admissao: "05/01/2020",
+      data_admissao_anterior: "31/12/2023",
+    });
+  });
+
+  it("rejeita data de admissão que não seja ISO válida, sem chamar a API", async () => {
+    h = await connect({ "GET /colaboradores": activeEmployees });
+
+    const wrongFormat = await listEmployees({ admitted_from: "05/01/2020" });
+    const impossible = await listEmployees({ admitted_until: "2023-02-31" });
+
+    expect(wrongFormat.isError).toBe(true);
+    expect(impossible.isError).toBe(true);
+    expect(h.requests).toHaveLength(0);
   });
 });
 

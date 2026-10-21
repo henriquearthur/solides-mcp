@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ToolContext } from "./context.js";
 import { jsonResult } from "./result.js";
+import { isoDateInput, isoToApiDate } from "../dates.js";
 import { paginate, paginationInput } from "../pagination.js";
 import { digitsOnly, includesText, normalizeText } from "../text.js";
 
@@ -48,12 +49,36 @@ export function registerEmployeeTools({ server, client }: ToolContext): void {
         department: z.string().optional().describe("Trecho do nome do Departamento."),
         position: z.string().optional().describe("Trecho do nome do Cargo."),
         unity: z.string().optional().describe("Trecho do nome da Unidade."),
+        include_dismissed: z
+          .boolean()
+          .optional()
+          .describe("Incluir Colaboradores demitidos. Sem isso, só vêm os ativos."),
+        admitted_from: isoDateInput.optional().describe("Admitidos a partir desta data (AAAA-MM-DD)."),
+        admitted_until: isoDateInput.optional().describe("Admitidos antes desta data (AAAA-MM-DD)."),
         ...paginationInput,
       },
       annotations: { readOnlyHint: true },
     },
-    async ({ name, cpf, registration, department, position, unity, limit, offset }) => {
-      const employees = await client.get<ApiEmployee[]>("/colaboradores");
+    async ({
+      name,
+      cpf,
+      registration,
+      department,
+      position,
+      unity,
+      include_dismissed,
+      admitted_from,
+      admitted_until,
+      limit,
+      offset,
+    }) => {
+      const employees = await client.get<ApiEmployee[]>("/colaboradores", {
+        query: {
+          status: include_dismissed ? "todos" : undefined,
+          data_admissao: admitted_from === undefined ? undefined : isoToApiDate(admitted_from),
+          data_admissao_anterior: admitted_until === undefined ? undefined : isoToApiDate(admitted_until),
+        },
+      });
       const matches = employees.filter(
         (e) =>
           (name === undefined || includesText(e.name, name)) &&
