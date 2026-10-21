@@ -138,16 +138,33 @@ describe("mapeamento de erros", () => {
     expect(error.message).toContain("CPF inválido");
   });
 
-  it("422 com corpo fora de JSON ou vazio ainda dá mensagem clara", async () => {
-    const html = makeClient({ "GET /x": { status: 422, body: "<html>erro</html>" } });
+  it("422 com corpo de texto fora de JSON repassa o texto como mensagem da API", async () => {
+    const { client } = makeClient({ "GET /x": { status: 422, body: "  CPF já cadastrado nesta Empresa\n" } });
+
+    const error = await errorOf(client.get("/x"));
+
+    expect(error.kind).toBe("validation");
+    expect(error.message).toBe("A Sólides recusou a requisição: CPF já cadastrado nesta Empresa");
+  });
+
+  it("422 com texto longo fora de JSON corta o texto em 500 caracteres", async () => {
+    const { client } = makeClient({ "GET /x": { status: 422, body: "x".repeat(2000) } });
+
+    const error = await errorOf(client.get("/x"));
+
+    expect(error.message).toBe(`A Sólides recusou a requisição: ${"x".repeat(500)}`);
+  });
+
+  it("422 com corpo vazio ainda dá mensagem clara", async () => {
     const empty = makeClient({ "GET /x": { status: 422 } });
+    const blank = makeClient({ "GET /x": { status: 422, body: "  \n" } });
 
-    const fromHtml = await errorOf(html.client.get("/x"));
     const fromEmpty = await errorOf(empty.client.get("/x"));
+    const fromBlank = await errorOf(blank.client.get("/x"));
 
-    expect(fromHtml.kind).toBe("validation");
-    expect(fromHtml.message).toContain("422");
     expect(fromEmpty.kind).toBe("validation");
+    expect(fromEmpty.message).toContain("422");
+    expect(fromBlank.message).toContain("422");
   });
 
   it("5xx vira indisponibilidade, mesmo com corpo fora de JSON", async () => {

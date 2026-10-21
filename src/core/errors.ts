@@ -21,13 +21,19 @@ export class SolidesApiError extends Error {
 export const DEFAULT_UNAUTHORIZED_MESSAGE =
   "Token inválido. Reconecte o conector com um Token de API válido.";
 
-/** Extrai a mensagem de um corpo de erro. O formato da Sólides não é documentado. */
-function messageFromBody(raw: string): string | undefined {
+/** Teto do texto cru repassado quando o corpo de erro não é JSON. */
+const MAX_TEXT_DETAIL = 500;
+
+/**
+ * Extrai a mensagem de um corpo de erro. O formato da Sólides não é documentado: corpo fora de
+ * JSON só é repassado como texto (aparado e cortado em `MAX_TEXT_DETAIL`) com `passText` (422); corpo vazio não tem mensagem.
+ */
+function messageFromBody(raw: string, passText = false): string | undefined {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return undefined;
+    return passText ? raw.trim().slice(0, MAX_TEXT_DETAIL) || undefined : undefined;
   }
   const pick = (value: unknown): string | undefined => {
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -67,7 +73,7 @@ export function mapHttpError(
     return new SolidesApiError("not_found", "Registro não encontrado na Sólides.", status);
   }
   if (status === 422) {
-    const detail = messageFromBody(rawBody);
+    const detail = messageFromBody(rawBody, true);
     return new SolidesApiError(
       "validation",
       detail
