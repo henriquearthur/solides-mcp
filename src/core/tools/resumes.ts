@@ -5,7 +5,11 @@ import { isoDateInput, isoToApiDate } from "../dates.js";
 import { walkPages } from "../pages.js";
 import { paginationInput } from "../pagination.js";
 
-/** Forma relevante de `GET /curriculos` (schema `Curriculo`). UNCONFIRMED até o teste de fumaça. */
+/**
+ * Forma relevante de `GET /curriculos` (schema `Curriculo`), conferida na API real. A API não devolve
+ * nenhuma data do Currículo (cadastro ou atualização), embora filtre por `data_inicial`/`data_final`;
+ * por isso o resumo não traz data. Com `page`, a lista vem de 25 em 25.
+ */
 interface ApiResume {
   id: number;
   fullName?: string;

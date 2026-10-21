@@ -9,6 +9,7 @@
  * Para cobrir mais um recurso, adicione um item em `checks`.
  */
 import { SolidesClient, V3_PAGE_PARAM, type V3Envelope } from "../src/core/index.js";
+import { OCCURRENCE_CLASSIFICATIONS, OCCURRENCE_TYPES } from "../src/core/occurrence-types.js";
 
 const token = process.env.SOLIDES_API_TOKEN?.trim();
 if (!token) {
@@ -45,7 +46,7 @@ const checks: Check[] = [
     },
   },
   {
-    // UNCONFIRMED: a paginação e o formato de GET /curriculos ainda não foram vistos na API real.
+    // Confirmado em 2026-10: com `page`, 25 Currículos por página e nenhum campo de data no item.
     name: "GET /curriculos (page 1 e 2, ocultar_foto=SIM) — confirma paginação e formato (#9)",
     run: async () => {
       const dateFinal = new Date();
@@ -69,6 +70,48 @@ const checks: Check[] = [
     },
   },
 ];
+
+// Nomes de tipo e classificação que a API devolve precisam estar nas tabelas de src/core/occurrence-types.ts.
+// Imprime só o total e os nomes desconhecidos, nenhum dado pessoal.
+checks.push({
+  name: "GET /ocorrencias — typeIncident e classification batem com as tabelas (#6)",
+  run: async () => {
+    const list = await client.get<{ typeIncident?: string; classification?: string }[]>("/ocorrencias");
+    if (!Array.isArray(list)) throw new Error("esperava um array de Ocorrências");
+    const known = (names: readonly string[], value: string | undefined) => value !== undefined && names.includes(value);
+    const types = Object.values(OCCURRENCE_TYPES) as string[];
+    const classifications = Object.values(OCCURRENCE_CLASSIFICATIONS) as string[];
+    const unknownTypes = [...new Set(list.filter((o) => !known(types, o.typeIncident)).map((o) => String(o.typeIncident)))];
+    const unknownClassifications = [
+      ...new Set(list.filter((o) => !known(classifications, o.classification)).map((o) => String(o.classification))),
+    ];
+    if (unknownTypes.length || unknownClassifications.length) {
+      throw new Error(`fora das tabelas: tipos ${JSON.stringify(unknownTypes)}, classificações ${JSON.stringify(unknownClassifications)}`);
+    }
+    return `${list.length} Ocorrência(s), todos os tipos e classificações conhecidos`;
+  },
+});
+
+// O filtro por Colaborador de get_evaluation_cycles depende de `ratedName` e `ratedDocument` nas avaliações.
+checks.push({
+  name: "GET V3 avaliações de um ciclo — campos do avaliado (#8)",
+  run: async () => {
+    const cycles = await client.get<V3Envelope<{ id: number }>>("/evaluation/external_api/solicitations", { api: "v3" });
+    for (const cycle of cycles.data ?? []) {
+      const evaluations = await client.get<V3Envelope<{ attributes?: Record<string, unknown> }>>(
+        `/evaluation/external_api/solicitations/${cycle.id}/evaluations`,
+        { api: "v3" },
+      );
+      const first = evaluations.data?.[0]?.attributes;
+      if (!first) continue;
+      if (typeof first.ratedName !== "string" || first.ratedDocument === undefined) {
+        throw new Error(`avaliação sem ratedName/ratedDocument; chaves: ${Object.keys(first).join(", ")}`);
+      }
+      return `ciclo ${cycle.id}: ratedName (string) e ratedDocument (${typeof first.ratedDocument}) presentes`;
+    }
+    return "nenhum ciclo da 1ª página tem avaliações (nada a conferir)";
+  },
+});
 
 /** Pede uma página dos ciclos V3 (GET) e devolve o `meta.pagination` e a quantidade de itens. */
 async function v3CyclesPage(page: number) {

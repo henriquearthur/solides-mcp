@@ -43,7 +43,7 @@ _Avoid_: filial, local
 ## Acompanhamento
 
 **Ocorrência**:
-Registro datado sobre um colaborador, com um tipo (Falta/Ausência, Atraso, Promoção, Advertência, Feedback, entre outros) e uma classificação positiva ou negativa.
+Registro datado sobre um colaborador, com um tipo (Falta/Ausência, Atraso, Promoção, Advertência, Feedback, entre outros) e uma classificação (Positivo, Negativo, Neutro ou Para melhorar).
 _Avoid_: incidente, evento
 
 **Feedback**:

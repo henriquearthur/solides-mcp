@@ -5,7 +5,7 @@ import { isoDateInput, isoToApiDate } from "../dates.js";
 import {
   OCCURRENCE_CLASSIFICATIONS,
   OCCURRENCE_TYPES_TEXT,
-  occurrenceClassificationInput,
+  occurrenceClassificationWriteInput,
   occurrenceTypeIdInput,
 } from "../occurrence-types.js";
 import { cpfInput } from "../text.js";
@@ -27,7 +27,7 @@ export function registerOccurrenceWriteTools({ server, client, allowWrites }: To
       inputSchema: {
         cpf: cpfInput.describe("CPF do Colaborador, com ou sem formatação (campo `idNumber` do `list_employees`)."),
         date: isoDateInput.describe("Data da Ocorrência (AAAA-MM-DD)."),
-        classification: occurrenceClassificationInput.describe("Classificação: `positive` (Positivo) ou `negative` (Negativo)."),
+        classification: occurrenceClassificationWriteInput.describe("Classificação: `positive` (Positivo) ou `negative` (Negativo)."),
         type: occurrenceTypeIdInput.describe(`Tipo da Ocorrência, de 1 a 12: ${OCCURRENCE_TYPES_TEXT}.`),
         comment: z.string().optional().describe("Comentário da Ocorrência."),
         value: z.number().optional().describe("Valor da Ocorrência, quando o tipo tiver um (por exemplo, desconto)."),

@@ -108,6 +108,30 @@ describe("get_occurrences (lista)", () => {
     expect(negative.items.map((o: { id: number }) => o.id)).toEqual([102, 103, 105]);
   });
 
+  it("filtra pelas classificações Neutro e Para melhorar, que a API também devolve", async () => {
+    h = await connect({
+      "GET /ocorrencias": [
+        ...allOccurrences,
+        { ...atrasoMaria, id: 106, classification: "Neutro" },
+        { ...atrasoMaria, id: 107, classification: "Para melhorar" },
+      ],
+    });
+
+    const neutral = JSON.parse(textOf(await getOccurrences({ classification: "neutral" })));
+    const toImprove = JSON.parse(textOf(await getOccurrences({ classification: "needs_improvement" })));
+
+    expect(neutral.items.map((o: { id: number }) => o.id)).toEqual([106]);
+    expect(toImprove.items.map((o: { id: number }) => o.id)).toEqual([107]);
+  });
+
+  it("mantém o valor em texto, como a API devolve", async () => {
+    h = await connect({ "GET /ocorrencias": [{ ...atrasoMaria, value: "12,90" }] });
+
+    const body = JSON.parse(textOf(await getOccurrences()));
+
+    expect(body.items[0].value).toBe("12,90");
+  });
+
   it("rejeita classificação desconhecida", async () => {
     h = await connect({ "GET /ocorrencias": allOccurrences });
 

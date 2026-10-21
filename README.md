@@ -102,7 +102,7 @@ O deploy é sempre manual; nenhum workflow publica a instância.
 
 ### Plano do Workers
 
-> **Pendente de confirmação.** A medição de CPU da tool `get_occurrences` numa instância real ainda não foi feita. Cada chamada baixa e interpreta cerca de 2,3 MB de JSON (a API devolve todas as Ocorrências de uma vez), e o plano gratuito do Workers limita a CPU por requisição (cerca de 10 ms, valor não confirmado). **O plano gratuito pode não bastar para `get_occurrences`.** O mantenedor vai confirmar com a medição; até lá, se `get_occurrences` falhar por limite de CPU, use o plano Workers Paid. As demais tools tratam respostas bem menores.
+> **Pendente de confirmação.** A medição de CPU da tool `get_occurrences` numa instância real ainda não foi feita. Cada chamada baixa e interpreta cerca de 2 MB de JSON (2,1 MB numa Empresa com 794 Ocorrências) (a API devolve todas as Ocorrências de uma vez), e o plano gratuito do Workers limita a CPU a 10 ms por requisição. Uma estimativa local, em Node, com 2,3 MB de Ocorrências sintéticas, mediu de 10 a 28 ms de CPU por chamada. **O plano gratuito provavelmente não basta para `get_occurrences`.** O mantenedor vai confirmar com a medição; até lá, se `get_occurrences` falhar por limite de CPU, use o plano Workers Paid. As demais tools tratam respostas bem menores.
 
 Outro limite do plano gratuito é o de 50 subrequisições por chamada. As tools que percorrem páginas da API (Currículos e Avaliações V3) têm um teto de 40 páginas e avisam na resposta (`incomplete: true`) quando o resultado fica incompleto.
 
@@ -137,7 +137,7 @@ Todas as tools de leitura levam `readOnlyHint`. Os nomes são em inglês e as de
 | `get_departments` | Departamentos | `id` |
 | `get_positions` | Cargos | `id` |
 | `get_reference_data` | CBOs, tipos de contrato e motivos de demissão | `kind` (`cbo`, `contract_types`, `dismissal_reasons`), `id`, `search` |
-| `get_occurrences` | Ocorrências, incluindo Feedbacks (tipo 10) | `id`, `employee_id`, `type` (1 a 12), `classification` (`positive`, `negative`), `date_from`, `date_until` |
+| `get_occurrences` | Ocorrências, incluindo Feedbacks (tipo 10) | `id`, `employee_id`, `type` (1 a 12), `classification` (`positive`, `negative`, `neutral`, `needs_improvement`), `date_from`, `date_until` |
 | `get_absences` | Absenteísmos | `id`, `cpf`, `employee_id`, `from`, `until` |
 | `get_profiler` | Profiler de todos os Colaboradores ou de um | `id` (do Colaborador) |
 | `get_passports` | Passaportes e relatório Profiler | `id`, `report_option` (Simples 1, Regular 2, Estendido 3, Coaching 4, Feedback 5; exige `id`) |

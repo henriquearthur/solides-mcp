@@ -112,7 +112,8 @@ describe("get_evaluation_cycles: avaliações de um ciclo", () => {
     const body = JSON.parse(textOf(await call("get_evaluation_cycles", { cycle_id: 111 })));
 
     expect(body.total).toBe(3);
-    expect(body.items[0]).toMatchObject({ id: 10, ratedName: "Maria da Conceição" });
+    expect(body.items[0]).toMatchObject({ ratedId: 1, ratedName: "Maria da Conceição" });
+    expect(body.items[0]).not.toHaveProperty("id");
     expect(body.items[0].criterions[0]).toMatchObject({ criterionGrade: 3, criterionComments: "Bom" });
     expect(h.requests).toHaveLength(1);
     expect(h.requests[0]).toMatchObject({ host: "apigw.solides.com.br", path: "/evaluation/external_api/solicitations/111/evaluations" });
@@ -133,6 +134,15 @@ describe("get_evaluation_cycles: avaliações de um ciclo", () => {
     const body = JSON.parse(textOf(await call("get_evaluation_cycles", { cycle_id: 111, cpf: "123.456.789-09" })));
 
     expect(body.items.map((e: { ratedId: number }) => e.ratedId)).toEqual([1]);
+  });
+
+  it("filtra por CPF que a API devolve em número, sem os zeros à esquerda", async () => {
+    const withLeadingZero = [...people, v3Evaluation(4, "Ana Lima", 1234567890)];
+    h = await connect({ [route]: v3Pages(4, (id) => withLeadingZero[id - 1]) });
+
+    const body = JSON.parse(textOf(await call("get_evaluation_cycles", { cycle_id: 111, cpf: "012.345.678-90" })));
+
+    expect(body.items.map((e: { ratedId: number }) => e.ratedId)).toEqual([4]);
   });
 
   it("consulta só o ciclo pedido, nunca vários", async () => {

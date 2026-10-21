@@ -63,10 +63,9 @@ export function cyclePages(total: number) {
   return v3Pages(total, cycle);
 }
 
-export function v3Evaluation(ratedId: number, ratedName: string, ratedDocument: string) {
+/** Avaliação V3 como a API real devolve: só `attributes`, sem `id` nem `type`, e o CPF em número. */
+export function v3Evaluation(ratedId: number, ratedName: string, ratedDocument: string | number) {
   return {
-    id: ratedId * 10,
-    type: "evaluations",
     attributes: {
       evaluatorId: 1,
       evaluatorName: "Avaliadora",

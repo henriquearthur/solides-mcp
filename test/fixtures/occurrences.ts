@@ -8,7 +8,7 @@ export interface FixtureOccurrence {
   incidentDate: string;
   classification: string;
   comment: string;
-  value: number | null;
+  value: number | string | null;
   typeIncident: string;
   colaborador: { id: number; nome: string };
   [extra: string]: unknown;
@@ -25,7 +25,7 @@ interface OccurrenceInput {
   incidentDate: string;
   classification: string;
   comment: string;
-  value?: number | null;
+  value?: number | string | null;
   typeIncident: string;
   colaborador: { id: number; nome: string };
 }

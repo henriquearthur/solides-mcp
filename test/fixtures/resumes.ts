@@ -1,6 +1,6 @@
 /**
  * Fixtures de `GET /curriculos` (forma do docs/api/openapi.json, schema `Curriculo`).
- * UNCONFIRMED: o formato real da lista e a paginação dependem do teste de fumaça (`npm run smoke`).
+ * Conferido na API real: com `page`, 25 por página, e o item não traz data.
  */
 export function resume(overrides: Record<string, unknown> = {}) {
   return {
