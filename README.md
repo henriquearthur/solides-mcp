@@ -83,7 +83,7 @@ Você precisa de uma conta na Cloudflare e de Node.js 20 ou superior.
 
    O `name` do Worker (`solides-mcp`) define o subdomínio; troque se quiser. O repositório não fixa domínio nem rota.
 
-4. Decida se a instância pode permitir escrita (veja [Escrita](#escrita)). Por padrão ela é **só leitura**. Para permitir que cada usuário escolha liberar a escrita na autorização, acrescente ao `wrangler.toml`:
+4. Decida se a instância pode permitir escrita (veja [Escrita](#escrita)). Por padrão ela é **só leitura**. Para permitir que cada usuário escolha liberar a escrita na autorização, troque o valor de `SOLIDES_ALLOW_WRITES` em `[vars]` do `wrangler.toml` (o arquivo traz `"false"`):
 
    ```toml
    [vars]
@@ -155,7 +155,7 @@ A única escrita suportada é **registrar e excluir Ocorrências** (o que inclui
 
 - **stdio:** `SOLIDES_ALLOW_WRITES=true` no ambiente é o único controle.
 - **Instância remota:** duas camadas.
-  1. A flag da instalação, `SOLIDES_ALLOW_WRITES`, é o **teto**: desligada (padrão), a opção nem aparece na tela de autorização e a escrita não pode ser ativada. Ligada (`"true"` em `[vars]` do `wrangler.toml`), a opção aparece.
+  1. A flag da instalação, `SOLIDES_ALLOW_WRITES`, é o **teto**: desligada (padrão), a opção nem aparece na tela de autorização e a escrita não pode ser ativada. Ligada (`"true"` em `[vars]` do `wrangler.toml`), a opção aparece. A flag vale a cada requisição: desligá-la depois também tira as tools de escrita das Autorizações já criadas.
   2. Em cada Autorização, o usuário decide marcando **Permitir escrita**, que vem desmarcada. A escolha fica gravada na Autorização; para mudá-la, reconecte o conector.
 
 Peça confirmação ao chat antes de registrar ou excluir. Para ter leitura e escrita com regras diferentes, suba duas instâncias ou crie Autorizações distintas.
